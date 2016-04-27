@@ -12,6 +12,7 @@ import (
 	"math"
 	//"math/rand"
 	//"net/url"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"sort"
@@ -101,16 +102,16 @@ func (ph *PublishHandler) HandleMessage(m *nsq.Message) error {
 		startTime = time.Now()
 	}
 
-	endOfCommand := strings.Index(string(m.Body), "}}") + 2
-	CommandString := m.Body[0:endOfCommand]
-	LogString := m.Body[endOfCommand:]
+	//endOfCommand := strings.Index(string(m.Body), "}}") + 2
+	CommandString := m.Body //[0:endOfCommand]
+	//LogString := m.Body//[endOfCommand:]
 
 	//log.Printf("stuff: %s", m.Body)
 	//log.Printf("stuff: %s", CommandString)
 	//log.Printf("stuff: %s", LogString)
 	//tmp := fmt.Sprintf("%s\n%s\n", CommandString, )
 	queuedItems = append(queuedItems, string(CommandString))
-	queuedItems = append(queuedItems, string(LogString))
+	//queuedItems = append(queuedItems, string(LogString))
 	queuedItemsNum = queuedItemsNum + 1
 
 	//log.Printf("seconds? %d", lastBulkTime.Unix())
@@ -118,7 +119,7 @@ func (ph *PublishHandler) HandleMessage(m *nsq.Message) error {
 
 	//fmt.Printf("sincelastbulk: %s   maxbulksecs: %s\n", sinceLastBulk, *maxBulkTime)
 	//fmt.Printf("bulksize: %d\n", *bulkSize)
-	fmt.Printf("Length of queued items: %d\n", queuedItemsNum)
+	//fmt.Printf("Length of queued items: %d\n", queuedItemsNum)
 	if queuedItemsNum >= *bulkSize || (queuedItemsNum > 0 && sinceLastBulk > *maxBulkTime) {
 		log.Printf("last batch time: %s number of items %d\n", sinceLastBulk, queuedItemsNum)
 		lastBulkTime = time.Now()
@@ -126,11 +127,11 @@ func (ph *PublishHandler) HandleMessage(m *nsq.Message) error {
 		log.Printf("begin preparing string\n")
 
 		//out := string("")
-		out := strings.Join(queuedItems[2:queuedItemsNum*2], "\n") + "\n"
+		out := strings.Join(queuedItems, "") //+ "\n"
 		//for e := queuedItems.Front(); e != nil; e = e.Next() {
 		//	out = fmt.Sprintf("%s%s\n", out, e.Value)
 		//}
-
+		//log.Println(out)
 		// If the data sent, flush the queuedItems
 		queuedItemsNum = 0
 		queuedItems = make([]string, *bulkSize)
@@ -205,9 +206,11 @@ func (p *PostPublisher) Publish(addr string, msg []byte) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("got status code %d", resp.StatusCode))
+		return errors.New(fmt.Sprintf("got status code %d : %v", resp.StatusCode, string(body)))
 	}
 	return nil
 }
