@@ -42,7 +42,7 @@ var (
 	mode          = flag.String("mode", "round-robin", "the upstream request mode options: round-robin or hostpool")
 	httpTimeout   = flag.Duration("http-timeout", 20*time.Second, "timeout for HTTP connect/read/write (each)")
 	statusEvery   = flag.Int("status-every", 250, "the # of requests between logging status (per handler), 0 disables")
-	contentType   = flag.String("content-type", "text/json", "the Content-Type used for POST requests")
+	contentType   = flag.String("content-type", "application/json", "the Content-Type used for POST requests")
 
 	readerOpts       = util.StringArray{}
 	postAddrs        = util.StringArray{}
